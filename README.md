@@ -1,2 +1,562 @@
-# test1
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقويم هجري وميلادي</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+        :root {
+            --primary-color: #FFA500;
+            --secondary-color: #FFD700;
+            --dark-color: #111111;
+            --text-color: #EEEEEE;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--dark-color);
+            color: var(--text-color);
+        }
+        .calendar-card {
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            background: #222222;
+            border: 1px solid var(--primary-color);
+        }
+        .custom-btn {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            color: var(--dark-color);
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .custom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(255, 165, 0, 0.3);
+        }
+        .highlight {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border-left: 3px solid var(--primary-color);
+        }
+        .birthday-countdown {
+            background: linear-gradient(135deg, #333333 0%, #222222 100%);
+            border: 2px solid var(--primary-color);
+            overflow: hidden;
+            position: relative;
+        }
+        .birthday-countdown::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 165, 0, 0.3), transparent);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 70px;
+            background: #333;
+            border-radius: 8px;
+            margin: 0 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .countdown-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 165, 0, 0.3);
+            background: linear-gradient(135deg, #444 0%, #333 100%);
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(1000px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        input, select {
+            background-color: #333;
+            color: var(--text-color);
+            border-color: var(--primary-color);
+        }
+        table th {
+            background-color: rgba(255, 165, 0, 0.2);
+        }
+        table tr:hover {
+            background-color: rgba(255, 165, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-2 text-yellow-500">التقويم الهجري والميلادي</h1>
+            <p class="text-gray-400">التحويل بين التاريخ الهجري والميلادي بسهولة</p>
+            <p class="text-sm text-yellow-500 mt-2">تصميم سلطان اليزيدي</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <!-- Current Date Card -->
+            <div class="calendar-card p-6">
+                <h2 class="text-xl font-semibold mb-4 text-yellow-500">التاريخ الحالي</h2>
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center p-3 highlight rounded-lg">
+                        <span class="font-medium">الميلادي:</span>
+                        <span id="currentGregorian" class="text-lg font-semibold text-yellow-500"></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 highlight rounded-lg">
+                        <span class="font-medium">الهجري:</span>
+                        <span id="currentHijri" class="text-lg font-semibold text-yellow-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Birthday Info Card -->
+            <div class="calendar-card p-6">
+                <h2 class="text-xl font-semibold mb-4 text-yellow-500">عيد ميلادك</h2>
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center p-3 highlight rounded-lg">
+                        <span class="font-medium">تاريخ الميلاد:</span>
+                        <span class="text-lg font-semibold text-yellow-500">23/04/1988</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 highlight rounded-lg">
+                        <span class="font-medium">العمر:</span>
+                        <span id="ageDisplay" class="text-lg font-semibold text-yellow-500"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Birthday Countdown -->
+        <div class="calendar-card p-6 mb-12 birthday-countdown">
+            <h2 class="text-xl font-semibold mb-4 text-yellow-500">العد التنازلي لعيد ميلادك القادم</h2>
+            <div id="confettiContainer" class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none"></div>
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <div class="countdown-item">
+                    <span id="countdown-days" class="text-2xl font-bold text-yellow-500">00</span>
+                    <span class="text-xs">يوم</span>
+                </div>
+                <div class="countdown-item">
+                    <span id="countdown-hours" class="text-2xl font-bold text-yellow-500">00</span>
+                    <span class="text-xs">ساعة</span>
+                </div>
+                <div class="countdown-item">
+                    <span id="countdown-minutes" class="text-2xl font-bold text-yellow-500">00</span>
+                    <span class="text-xs">دقيقة</span>
+                </div>
+                <div class="countdown-item">
+                    <span id="countdown-seconds" class="text-2xl font-bold text-yellow-500">00</span>
+                    <span class="text-xs">ثانية</span>
+                </div>
+            </div>
+            <div class="text-center">
+                <button id="celebrateButton" class="custom-btn px-6 py-3 rounded-full">احتفل الآن! 🎉</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <!-- Converter Card -->
+            <div class="calendar-card p-6">
+                <h2 class="text-xl font-semibold mb-4 text-yellow-500">محول التاريخ</h2>
+
+                <div class="mb-6">
+                    <h3 class="text-md font-medium mb-2">الميلادي إلى الهجري</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <input type="date" id="gregorianDate" class="p-2 border rounded flex-grow focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <button id="convertToHijri" class="custom-btn px-4 py-2 rounded">تحويل</button>
+                    </div>
+                    <div id="hijriResult" class="mt-3 p-3 bg-gray-800 rounded-lg hidden">
+                        <span class="font-medium">التاريخ الهجري: </span>
+                        <span id="hijriOutput" class="text-yellow-500"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-md font-medium mb-2">الهجري إلى الميلادي</h3>
+                    <div class="flex flex-wrap gap-3 mb-2">
+                        <select id="hijriDay" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            <option value="">اليوم</option>
+                        </select>
+                        <select id="hijriMonth" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            <option value="">الشهر</option>
+                        </select>
+                        <select id="hijriYear" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            <option value="">السنة</option>
+                        </select>
+                    </div>
+                    <button id="convertToGregorian" class="custom-btn px-4 py-2 rounded">تحويل</button>
+                    <div id="gregorianResult" class="mt-3 p-3 bg-gray-800 rounded-lg hidden">
+                        <span class="font-medium">التاريخ الميلادي: </span>
+                        <span id="gregorianOutput" class="text-yellow-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Omani Special Days -->
+            <div class="calendar-card p-6">
+                <h2 class="text-xl font-semibold mb-4 text-yellow-500">المناسبات العمانية الخاصة</h2>
+                <div class="overflow-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">المناسبة</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">التاريخ الميلادي</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">التاريخ الهجري</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700" id="specialDaysTable">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-black text-white py-6 border-t border-yellow-500">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2025 تصميم بواسطة سلطان اليزيدي. جميع الحقوق محفوظة.</p>
+            <p class="text-yellow-500 text-sm mt-2">تم بناؤه باستخدام HTML و CSS و JavaScript</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date dropdowns
+            const hijriDaySelect = document.getElementById('hijriDay');
+            const hijriMonthSelect = document.getElementById('hijriMonth');
+            const hijriYearSelect = document.getElementById('hijriYear');
+
+            // Populate days
+            for (let i = 1; i <= 30; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                hijriDaySelect.appendChild(option);
+            }
+
+            // Arabic month names
+            const hijriMonths = [
+                "محرم", "صفر", "ربيع الأول", "ربيع الثاني", 
+                "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان",
+                "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+            ];
+
+            // Populate months
+            hijriMonths.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = month;
+                hijriMonthSelect.appendChild(option);
+            });
+
+            // Populate years (current Hijri year ± 100)
+            const currentYear = new Date().getFullYear();
+            const approximateHijriYear = Math.floor(currentYear - 622 + (currentYear - 622) / 32);
+            
+            for (let i = approximateHijriYear - 100; i <= approximateHijriYear + 100; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                hijriYearSelect.appendChild(option);
+            }
+
+            // Arabic weekday and month names
+            const arabicWeekdays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+            const arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", 
+                                 "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
+            // Set current Gregorian date
+            const today = new Date();
+            document.getElementById('currentGregorian').textContent = 
+                `${arabicWeekdays[today.getDay()]} ${today.getDate()} ${arabicMonths[today.getMonth()]} ${today.getFullYear()}`;
+            
+            // Set default date for converter
+            document.getElementById('gregorianDate').valueAsDate = today;
+
+            // Set current Hijri date (approximate conversion)
+            const hijriDate = gregorianToHijri(today);
+            document.getElementById('currentHijri').textContent = 
+                `${hijriDate.day} ${hijriMonths[hijriDate.month-1]} ${hijriDate.year} هـ`;
+
+            // Initialize age calculation and birthday countdown
+            const birthDate = new Date(1988, 3, 23); // April 23, 1988
+            calculateAge(birthDate);
+            initBirthdayCountdown(birthDate);
+
+            // Converter button event listeners
+            document.getElementById('convertToHijri').addEventListener('click', function() {
+                const gregorianDateInput = document.getElementById('gregorianDate').valueAsDate;
+                if (gregorianDateInput) {
+                    const result = gregorianToHijri(gregorianDateInput);
+                    document.getElementById('hijriOutput').textContent = 
+                        `${result.day} ${hijriMonths[result.month-1]} ${result.year} هـ`;
+                    document.getElementById('hijriResult').classList.remove('hidden');
+                }
+            });
+
+            document.getElementById('convertToGregorian').addEventListener('click', function() {
+                const day = parseInt(document.getElementById('hijriDay').value);
+                const month = parseInt(document.getElementById('hijriMonth').value);
+                const year = parseInt(document.getElementById('hijriYear').value);
+                
+                if (day && month && year) {
+                    const result = hijriToGregorian(year, month, day);
+                    document.getElementById('gregorianOutput').textContent = 
+                        `${arabicWeekdays[result.getDay()]} ${result.getDate()} ${arabicMonths[result.getMonth()]} ${result.getFullYear()}`;
+                    document.getElementById('gregorianResult').classList.remove('hidden');
+                }
+            });
+
+            // Celebrate button event
+            document.getElementById('celebrateButton').addEventListener('click', function() {
+                createConfetti();
+            });
+
+            // Populate Omani special days
+            const specialDays = [
+                {
+                    occasion: "العيد الوطني",
+                    gregorianDate: "18 نوفمبر",
+                    hijriDate: "يختلف سنويًا"
+                },
+                {
+                    occasion: "يوم النهضة",
+                    gregorianDate: "23 يوليو",
+                    hijriDate: "يختلف سنويًا"
+                },
+                {
+                    occasion: "عيد الفطر",
+                    gregorianDate: "يختلف سنويًا",
+                    hijriDate: "1 شوال"
+                },
+                {
+                    occasion: "عيد الأضحى",
+                    gregorianDate: "يختلف سنويًا",
+                    hijriDate: "10 ذو الحجة"
+                },
+                {
+                    occasion: "رأس السنة الهجرية",
+                    gregorianDate: "يختلف سنويًا",
+                    hijriDate: "1 محرم"
+                },
+                {
+                    occasion: "المولد النبوي",
+                    gregorianDate: "يختلف سنويًا",
+                    hijriDate: "12 ربيع الأول"
+                },
+                {
+                    occasion: "الإسراء والمعراج",
+                    gregorianDate: "يختلف سنويًا",
+                    hijriDate: "27 رجب"
+                },
+                {
+                    occasion: "يوم القوات المسلحة",
+                    gregorianDate: "11 ديسمبر",
+                    hijriDate: "يختلف سنويًا"
+                },
+                {
+                    occasion: "يوم تولي السلطان هيثم",
+                    gregorianDate: "11 يناير",
+                    hijriDate: "يختلف سنويًا"
+                }
+            ];
+
+            const specialDaysTable = document.getElementById('specialDaysTable');
+            specialDays.forEach(day => {
+                const row = document.createElement('tr');
+                
+                const occasionCell = document.createElement('td');
+                occasionCell.className = 'px-6 py-4 whitespace-nowrap';
+                occasionCell.textContent = day.occasion;
+                
+                const gregCell = document.createElement('td');
+                gregCell.className = 'px-6 py-4 whitespace-nowrap';
+                gregCell.textContent = day.gregorianDate;
+                
+                const hijriCell = document.createElement('td');
+                hijriCell.className = 'px-6 py-4 whitespace-nowrap';
+                hijriCell.textContent = day.hijriDate;
+                
+                row.appendChild(occasionCell);
+                row.appendChild(gregCell);
+                row.appendChild(hijriCell);
+                
+                specialDaysTable.appendChild(row);
+            });
+
+            // Age calculation function
+            function calculateAge(birthdate) {
+                const today = new Date();
+                let age = today.getFullYear() - birthdate.getFullYear();
+                const monthDiff = today.getMonth() - birthdate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+                    age--;
+                }
+                
+                document.getElementById('ageDisplay').textContent = `${age} سنة`;
+            }
+
+            // Birthday countdown function
+            function initBirthdayCountdown(birthdate) {
+                function updateCountdown() {
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    
+                    // Set this year's birthday
+                    const nextBirthday = new Date(currentYear, birthdate.getMonth(), birthdate.getDate());
+                    
+                    // If birthday has passed this year, set for next year
+                    if (now > nextBirthday) {
+                        nextBirthday.setFullYear(currentYear + 1);
+                    }
+                    
+                    // Calculate time difference
+                    const diff = nextBirthday - now;
+                    
+                    // Calculate days, hours, minutes, seconds
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    // Update countdown display
+                    document.getElementById('countdown-days').textContent = days.toString().padStart(2, '0');
+                    document.getElementById('countdown-hours').textContent = hours.toString().padStart(2, '0');
+                    document.getElementById('countdown-minutes').textContent = minutes.toString().padStart(2, '0');
+                    document.getElementById('countdown-seconds').textContent = seconds.toString().padStart(2, '0');
+                }
+                
+                // Initial update
+                updateCountdown();
+                
+                // Update every second
+                setInterval(updateCountdown, 1000);
+            }
+
+            // Confetti animation function
+            function createConfetti() {
+                const confettiContainer = document.getElementById('confettiContainer');
+                confettiContainer.innerHTML = '';
+                
+                const colors = ['#FFA500', '#FFD700', '#FFFFFF', '#FF4500'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    
+                    // Random position
+                    const left = Math.random() * 100;
+                    confetti.style.left = `${left}%`;
+                    
+                    // Random color
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.backgroundColor = color;
+                    
+                    // Random size
+                    const size = Math.random() * 10 + 5;
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    
+                    // Random rotation
+                    const rotation = Math.random() * 360;
+                    confetti.style.transform = `rotate(${rotation}deg)`;
+                    
+                    // Random animation duration
+                    const duration = Math.random() * 3 + 2;
+                    confetti.style.animationDuration = `${duration}s`;
+                    
+                    // Random animation delay
+                    const delay = Math.random() * 0.5;
+                    confetti.style.animationDelay = `${delay}s`;
+                    
+                    confettiContainer.appendChild(confetti);
+                }
+            }
+
+            // Conversion functions
+            function gregorianToHijri(date) {
+                // This is a simplified approximation method
+                // A more accurate calculation would require advanced astronomical calculations
+                
+                // Julian day calculation
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                
+                let jd = Math.floor((1461 * (year + 4800 + (month - 14) / 12)) / 4) +
+                         Math.floor((367 * (month - 2 - 12 * ((month - 14) / 12))) / 12) -
+                         Math.floor((3 * (Math.floor((year + 4900 + (month - 14) / 12) / 100))) / 4) +
+                         day - 32075;
+                
+                // Hijri date calculation (approximate)
+                const l = jd - 1948440 + 10632;
+                const n = Math.floor((l - 1) / 10631);
+                const l2 = l - 10631 * n + 354;
+                const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) + 
+                          Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+                
+                const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+                          Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+                
+                const hijriMonth = Math.floor((24 * l3) / 709);
+                const hijriDay = l3 - Math.floor((709 * hijriMonth) / 24);
+                const hijriYear = 30 * n + j - 30;
+                
+                return { year: hijriYear, month: hijriMonth, day: hijriDay };
+            }
+
+            function hijriToGregorian(year, month, day) {
+                // This is a simplified approximation method
+                
+                // Calculate Julian day
+                const jd = Math.floor((11 * year + 3) / 30) + 
+                           354 * year + 
+                           30 * month - 
+                           Math.floor((month - 1) / 2) + 
+                           day + 1948440 - 385;
+                
+                // Convert Julian day to Gregorian date
+                const z = jd;
+                const a = z;
+                const b = a + 1524;
+                const c = Math.floor((b - 122.1) / 365.25);
+                const d = Math.floor(365.25 * c);
+                const e = Math.floor((b - d) / 30.6001);
+                
+                const gregorianDay = b - d - Math.floor(30.6001 * e);
+                let gregorianMonth = e - (e > 13 ? 13 : 1);
+                let gregorianYear = c - (gregorianMonth > 2 ? 4716 : 4715);
+                
+                return new Date(gregorianYear, gregorianMonth - 1, gregorianDay);
+            }
+        });
+    </script>
+</body>
+</html># test1
 test1
